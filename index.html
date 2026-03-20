@@ -9,7 +9,6 @@
             --primary-color: #e50014;
             --bg-color: #f4f4f9;
             --box-bg: #ffffff;
-            --slot-color: #d1d8e0;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -118,28 +117,21 @@
         /* 目標網格區 (下方) */
         .grid-area {
             display: grid;
-            gap: 5px;
+            gap: 2px;
             padding: 15px;
-            background: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.2); /* 讓整個底色變淡 */
             border-radius: 8px;
             margin: 0 auto;
         }
 
-        /* 汽水罐 (紅點) 與 空插槽 */
-        .can, .slot {
+        /* 汽水罐 (紅點) */
+        .can {
             width: 40px;
             height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-        .slot {
-            background-color: rgba(255, 255, 255, 0.6);
-            border: 2px dashed #999;
-            box-sizing: border-box;
-        }
-        .can {
             background: radial-gradient(circle at 30% 30%, #ff4d4d, var(--primary-color));
             border: 2px solid #a00000;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
@@ -157,6 +149,19 @@
             height: 18px;
             border-radius: 50%;
             border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* 空插槽 (取消圓形虛線，改為淺色方格) */
+        .slot {
+            width: 45px;
+            height: 45px;
+            background-color: rgba(255, 255, 255, 0.4); /* 淺白色方格 */
+            border: 1px solid rgba(255, 255, 255, 0.6); /* 淡淡的邊線 */
+            border-radius: 4px; /* 方形微圓角 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
         }
 
         /* 右側：公式與結果區 */
@@ -372,6 +377,7 @@
             lockOverlay.classList.remove('unlocked');
             instruction.innerText = `👇 請將 ${cansToPlace} 個紅點拖曳到下方的淺色方格內`;
             instruction.style.background = "rgba(255, 255, 255, 0.8)";
+            instruction.style.color = "#333";
 
             // 清空區域
             stagingArea.innerHTML = '';
@@ -433,12 +439,11 @@
                 currentDrag = e.target;
                 currentDrag.setPointerCapture(e.pointerId);
                 
-                // 為了讓拖曳時能自由移動，改用 fixed 定位
                 const rect = currentDrag.getBoundingClientRect();
                 offset.x = e.clientX - rect.left;
                 offset.y = e.clientY - rect.top;
                 
-                document.body.appendChild(currentDrag); // 移到最外層避免被裁切
+                document.body.appendChild(currentDrag); 
                 currentDrag.style.position = 'fixed';
                 currentDrag.style.left = (e.clientX - offset.x) + 'px';
                 currentDrag.style.top = (e.clientY - offset.y) + 'px';
@@ -471,13 +476,12 @@
                     const slotCenterX = slotRect.left + slotRect.width / 2;
                     const slotCenterY = slotRect.top + slotRect.height / 2;
                     
-                    // 計算距離
+                    // 計算距離，如果小於 40px，就「吸附」進去
                     const dist = Math.hypot(canCenterX - slotCenterX, canCenterY - slotCenterY);
                     
-                    // 如果距離小於 40px，就「吸附」進去
                     if (dist < 40) {
                         slot.appendChild(currentDrag);
-                        currentDrag.style.position = 'static'; // 恢復正常排版
+                        currentDrag.style.position = 'static'; 
                         slot.classList.add('filled');
                         currentDrag.style.cursor = 'default';
                         snapped = true;
