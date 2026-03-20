@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汽水包裝設計 - 數學建模展示</title>
+    <title>12罐汽水包裝設計模型 - 數學建模展示</title>
     <style>
         :root {
             --primary-color: #e50014;
@@ -22,6 +22,14 @@
         h1 {
             color: #333;
             text-align: center;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: #666;
+            text-align: center;
+            font-size: 1.2rem;
+            margin-top: 0;
+            margin-bottom: 25px;
         }
         .container {
             display: flex;
@@ -65,16 +73,39 @@
             margin: 8px 0;
             font-size: 16px;
         }
+        
+        /* 數學分數與公式排版樣式 */
         .formula-box {
             background: #fff;
-            padding: 10px;
+            padding: 15px 10px;
             border-left: 4px solid var(--primary-color);
             margin: 10px 0;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 16px;
             color: #333;
             overflow-x: auto;
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
         }
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            margin: 0 8px;
+        }
+        .numerator {
+            border-bottom: 1px solid #333;
+            padding: 0 4px;
+        }
+        .denominator {
+            padding: 0 4px;
+        }
+        .operator {
+            margin: 0 5px;
+        }
+
         .highlight {
             font-size: 24px;
             font-weight: bold;
@@ -92,7 +123,8 @@
             margin-left: 10px;
             vertical-align: middle;
         }
-        /* Visualization Styles */
+        
+        /* 視覺化面板樣式 */
         .visual-panel {
             display: flex;
             flex-direction: column;
@@ -101,7 +133,7 @@
             background: #e5cbab;
             border: 2px dashed #b58c5c;
             position: relative;
-            overflow: auto; /* 允許出現捲軸，防止 1x12 被切斷 */
+            overflow: auto; /* 允許出現捲軸 */
             min-height: 350px;
             padding: 30px 10px;
         }
@@ -111,7 +143,7 @@
             padding: 10px;
             background: rgba(255,255,255,0.3);
             border-radius: 8px;
-            min-width: max-content; /* 確保汽水罐不會被擠壓變形 */
+            min-width: max-content; 
             min-height: max-content;
         }
         .can {
@@ -149,6 +181,7 @@
 <body>
 
     <h1>🥤 12罐汽水包裝設計模型</h1>
+    <h2 class="subtitle">12-Can Soda Packaging Design Model</h2>
     
     <div class="container">
         <div class="panel">
@@ -182,7 +215,19 @@
                 
                 <div style="margin-top: 15px;">
                     <strong>代入公式 (Substituted Formula):</strong><br>
-                    <span style="font-size: 13px; color: #666;">公式: 2nd² + 24dhx/n + 24dh/x</span>
+                    <div style="font-size: 13px; color: #666; display: flex; align-items: center; margin-top: 5px;">
+                        公式： 2nd² <span class="operator">+</span> 
+                        <span class="fraction" style="font-size: 11px;">
+                            <span class="numerator">24dhx</span>
+                            <span class="denominator">n</span>
+                        </span>
+                        <span class="operator">+</span>
+                        <span class="fraction" style="font-size: 11px;">
+                            <span class="numerator">24dh</span>
+                            <span class="denominator">x</span>
+                        </span>
+                    </div>
+                    
                     <div class="formula-box" id="formula-display">
                         </div>
                 </div>
@@ -241,21 +286,34 @@
             const length = cols * d;
             const height = layers * h;
 
-            // 計算總表面積 2(WL + WH + LH)，等同於工作紙上的公式
+            // 計算總表面積 2(WL + WH + LH)
             const area = 2 * (width * length + width * height + length * height);
 
-            // 產生代入數字的公式字串
-            // 公式: 2nd^2 + (24dhx)/n + (24dh)/x
+            // === 產生真實分數排版的 HTML 字串 ===
             const part1 = `2(${n})(${d})²`;
-            const part2 = `[24(${d})(${h})(${x})] / ${n}`;
-            const part3 = `[24(${d})(${h})] / ${x}`;
-            const formulaString = `= ${part1} + ${part2} + ${part3}`;
+            
+            // 分數 1：24dhx / n
+            const part2HTML = `
+                <span class="fraction">
+                    <span class="numerator">24(${d})(${h})(${x})</span>
+                    <span class="denominator">${n}</span>
+                </span>`;
+                
+            // 分數 2：24dh / x
+            const part3HTML = `
+                <span class="fraction">
+                    <span class="numerator">24(${d})(${h})</span>
+                    <span class="denominator">${x}</span>
+                </span>`;
+                
+            // 組合完整公式
+            const formulaHTML = `= ${part1} <span class="operator">+</span> ${part2HTML} <span class="operator">+</span> ${part3HTML}`;
 
-            // 更新文字顯示
+            // 更新文字與 HTML 顯示
             document.getElementById("wid").innerText = width.toFixed(1);
             document.getElementById("len").innerText = length.toFixed(1);
             document.getElementById("hei").innerText = height.toFixed(1);
-            document.getElementById("formula-display").innerText = formulaString;
+            document.getElementById("formula-display").innerHTML = formulaHTML; // 注意這裡是 innerHTML
             document.getElementById("area").innerText = area.toFixed(2);
 
             // 如果是最佳解 (2146.68)，顯示徽章
