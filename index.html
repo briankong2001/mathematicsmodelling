@@ -2,81 +2,213 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>12罐汽水包裝設計模型 - 數學建模展示</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>12罐汽水包裝設計模型 - 數學建模互動展示</title>
     <style>
         :root {
             --primary-color: #e50014;
             --bg-color: #f4f4f9;
             --box-bg: #ffffff;
+            --slot-color: #d1d8e0;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* 防止拖曳時整個網頁被拉動 */
+            overscroll-behavior-y: contain; 
         }
         h1 {
             color: #333;
             text-align: center;
             margin-bottom: 5px;
+            font-size: 1.8rem;
         }
         .subtitle {
             color: #666;
             text-align: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             margin-top: 0;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
-        .container {
+        .main-layout {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            max-width: 950px;
+            max-width: 1100px;
             width: 100%;
             justify-content: center;
+            align-items: flex-start;
         }
-        .panel {
+        
+        /* 左側：控制與互動區 */
+        .interactive-panel {
+            flex: 1.5;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .controls {
             background: var(--box-bg);
-            padding: 20px;
+            padding: 15px 20px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            flex: 1;
-            min-width: 320px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
         }
         .control-group {
-            margin-bottom: 15px;
+            flex: 1;
+            min-width: 140px;
         }
         label {
             display: block;
             font-weight: bold;
             margin-bottom: 5px;
             color: #555;
+            font-size: 14px;
         }
         select {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid #ccc;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
         }
-        .result-box {
-            background: #eef2f5;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
+
+        /* 遊戲區域 */
+        .game-board {
+            background: #e5cbab; /* 紙皮顏色 */
+            border: 2px dashed #b58c5c;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
         }
-        .result-box p {
-            margin: 8px 0;
-            font-size: 16px;
+        .instruction {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 15px;
+            pointer-events: none;
         }
         
-        /* 穩定的數學分數排版樣式 */
+        /* 準備區 (上方) */
+        .staging-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            min-height: 50px;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+
+        /* 目標網格區 (下方) */
+        .grid-area {
+            display: grid;
+            gap: 5px;
+            padding: 15px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 8px;
+            margin: 0 auto;
+        }
+
+        /* 汽水罐 (紅點) 與 空插槽 */
+        .can, .slot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slot {
+            background-color: rgba(255, 255, 255, 0.6);
+            border: 2px dashed #999;
+            box-sizing: border-box;
+        }
+        .can {
+            background: radial-gradient(circle at 30% 30%, #ff4d4d, var(--primary-color));
+            border: 2px solid #a00000;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+            cursor: grab;
+            touch-action: none; /* 在手機上拖曳時不滾動螢幕 */
+            position: relative;
+            z-index: 10;
+        }
+        .can:active {
+            cursor: grabbing;
+        }
+        .can::after {
+            content: '';
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* 右側：公式與結果區 */
+        .results-panel {
+            flex: 1;
+            min-width: 300px;
+            background: var(--box-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* 上鎖遮罩 */
+        .lock-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            transition: opacity 0.5s ease;
+        }
+        .lock-overlay.unlocked {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .lock-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .lock-text {
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        /* 公式與結果文字樣式 */
+        .result-item {
+            margin: 10px 0;
+            font-size: 16px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        
         .formula-box {
-            background: #fff;
+            background: #f8f9fa;
             padding: 15px 10px;
             border-left: 4px solid var(--primary-color);
             margin: 10px 0;
@@ -109,7 +241,7 @@
         }
 
         .highlight {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
             color: var(--primary-color);
             margin-top: 5px;
@@ -125,141 +257,75 @@
             margin-left: 10px;
             vertical-align: middle;
         }
-        
-        /* 視覺化面板樣式 (修復 1x12 裁切問題) */
-        .visual-panel {
-            display: block; /* 取消 flex 置中，避免長圖片左側被吃掉 */
-            background: #e5cbab;
-            border: 2px dashed #b58c5c;
-            position: relative;
-            min-height: 350px;
-            padding: 40px 10px 20px 10px;
-        }
-        .scroll-wrapper {
-            width: 100%;
-            overflow-x: auto; /* 確保內容過長時可以左右滑動 */
-            display: block;
-            text-align: center;
-        }
-        .can-grid {
-            display: grid;
-            gap: 2px;
-            padding: 15px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 8px;
-            width: max-content; 
-            margin: 0 auto; /* 安全的置中方法 */
-        }
-        .can {
-            width: 35px; /* 稍微縮小一點點讓畫面更好看 */
-            height: 35px;
-            background: radial-gradient(circle at 30% 30%, #ff4d4d, var(--primary-color));
-            border-radius: 50%;
-            border: 2px solid #a00000;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .can::after {
-            content: '';
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-        .layer-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #333;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 14px;
-            z-index: 10;
-        }
     </style>
 </head>
 <body>
 
     <h1>🥤 12罐汽水包裝設計模型</h1>
-    <h2 class="subtitle">12-Can Soda Packaging Design Model</h2>
+    <h2 class="subtitle">Interactive Mathematical Modelling</h2>
     
-    <div class="container">
-        <div class="panel">
-            <h3>設定變數 (Variables)</h3>
-            <div class="control-group">
-                <label for="layers">層數 (Layers):</label>
-                <select id="layers" onchange="updateArrangements()">
-                    <option value="1">1 層 (每層 12 罐)</option>
-                    <option value="2">2 層 (每層 6 罐)</option>
-                    <option value="3">3 層 (每層 4 罐)</option>
-                    <option value="4">4 層 (每層 3 罐)</option>
-                    <option value="6">6 層 (每層 2 罐)</option>
-                    <option value="12">12 層 (每層 1 罐)</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label for="arrangement">每層排列方式 (Arrangement per layer):</label>
-                <select id="arrangement" onchange="calculate()">
+    <div class="main-layout">
+        <div class="interactive-panel">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="layers">1. 選擇層數 (Layers):</label>
+                    <select id="layers" onchange="updateArrangements()">
+                        <option value="1">1 層 (需排 12 罐)</option>
+                        <option value="2">2 層 (每層需排 6 罐)</option>
+                        <option value="3">3 層 (每層需排 4 罐)</option>
+                        <option value="4">4 層 (每層需排 3 罐)</option>
+                        <option value="6">6 層 (每層需排 2 罐)</option>
+                        <option value="12">12 層 (每層需排 1 罐)</option>
                     </select>
+                </div>
+                <div class="control-group">
+                    <label for="arrangement">2. 每層排列方式:</label>
+                    <select id="arrangement" onchange="initGame()">
+                        </select>
+                </div>
             </div>
 
-            <div class="result-box">
-                <h3>📦 計算結果 (Calculation Results)</h3>
-                <p>假設 (Assumptions): <br>
-                   直徑 (Diameter, d) = 6.7 cm <br>
-                   高度 (Height, h) = 12 cm</p>
-                <hr>
-                <p>包裝長度 (Length, L): <span id="len" style="font-weight:bold;">0</span> cm</p>
-                <p>包裝闊度 (Width, W): <span id="wid" style="font-weight:bold;">0</span> cm</p>
-                <p>包裝高度 (Height, H): <span id="hei" style="font-weight:bold;">0</span> cm</p>
+            <div class="game-board" id="game-board">
+                <div class="instruction" id="instruction">👇 請將所有紅點拖曳到下方的淺色方格內</div>
                 
-                <div style="margin-top: 15px;">
-                    <strong>代入公式 (Substituted Formula):</strong><br>
-                    
-                    <div class="formula-box" style="margin-bottom: 5px; background: transparent; border: none; padding: 0;">
-                        <span style="font-size: 14px; color: #666;">公式: </span>
-                        <span style="font-size: 14px; color: #666;">2nd²</span>
-                        <span class="math-operator" style="color: #666;">+</span> 
-                        <span class="math-fraction" style="color: #666;">
-                            <span class="math-numerator">24dhx</span>
-                            <span class="math-denominator">n</span>
-                        </span>
-                        <span class="math-operator" style="color: #666;">+</span>
-                        <span class="math-fraction" style="color: #666;">
-                            <span class="math-numerator">24dh</span>
-                            <span class="math-denominator">x</span>
-                        </span>
-                    </div>
-                    
-                    <div class="formula-box" id="formula-display">
-                        </div>
-                </div>
-
-                <div style="margin-top: 10px;">總表面面積 (Total Surface Area): <br>
-                    <span class="highlight" id="area">0</span> <span class="highlight" style="font-size:18px;">cm²</span>
-                    <span id="best-badge" class="best-badge">🏆 最佳省料方案 (Best)!</span>
-                </div>
+                <div class="staging-area" id="staging-area"></div>
+                
+                <div class="grid-area" id="grid-area"></div>
             </div>
         </div>
 
-        <div class="panel visual-panel" id="visual-panel">
-            <div class="layer-badge" id="layer-badge">共 1 層</div>
-            <div class="scroll-wrapper">
-                <div class="can-grid" id="can-grid">
+        <div class="results-panel">
+            <div class="lock-overlay" id="lock-overlay">
+                <div class="lock-icon">🔒</div>
+                <div class="lock-text">請先完成左方的汽水排列，<br>解鎖數學公式與計算結果！</div>
+            </div>
+
+            <h3 style="margin-top:0;">📦 計算結果 (Results)</h3>
+            <p style="font-size:14px; color:#666;">假設 (Assumptions): <br>
+               直徑 (Diameter, d) = 6.7 cm <br>
+               高度 (Height, h) = 12 cm</p>
+            
+            <div class="result-item">長度 (L): <span id="len" style="font-weight:bold;">0</span> cm</div>
+            <div class="result-item">闊度 (W): <span id="wid" style="font-weight:bold;">0</span> cm</div>
+            <div class="result-item">高度 (H): <span id="hei" style="font-weight:bold;">0</span> cm</div>
+            
+            <div style="margin-top: 15px;">
+                <strong>代入公式 (Substituted Formula):</strong><br>
+                <div class="formula-box" id="formula-display">
                     </div>
+            </div>
+
+            <div style="margin-top: 15px;">總表面面積 (Surface Area): <br>
+                <span class="highlight" id="area">0</span> <span class="highlight" style="font-size:18px;">cm²</span>
+                <span id="best-badge" class="best-badge">🏆 最佳省料方案!</span>
             </div>
         </div>
     </div>
 
     <script>
-        const d = 6.7; // 直徑 (Diameter)
-        const h = 12;  // 高度 (Height)
+        const d = 6.7; // 直徑
+        const h = 12;  // 高度
         
-        // 定義每一層數對應的排列可能性 [排(x), 列(n/x)]
         const configs = {
             1: [[1, 12], [2, 6], [3, 4]],
             2: [[1, 6], [2, 3]],
@@ -269,101 +335,179 @@
             12: [[1, 1]]
         };
 
+        // DOM 元素
+        const stagingArea = document.getElementById('staging-area');
+        const gridArea = document.getElementById('grid-area');
+        const lockOverlay = document.getElementById('lock-overlay');
+        const instruction = document.getElementById('instruction');
+
+        // 遊戲狀態
+        let cansToPlace = 0;
+        let cansPlaced = 0;
+
         function updateArrangements() {
             const layers = document.getElementById("layers").value;
             const arrangementSelect = document.getElementById("arrangement");
-            arrangementSelect.innerHTML = ""; // 清空選項
+            arrangementSelect.innerHTML = ""; 
 
             configs[layers].forEach(arr => {
                 const option = document.createElement("option");
-                option.value = arr[0]; // value 存儲排數 x
+                option.value = arr[0]; 
                 option.text = `${arr[0]} 排(rows) × ${arr[1]} 列(cols)`;
                 arrangementSelect.appendChild(option);
             });
 
-            calculate(); // 更新計算與圖形
+            initGame(); // 重設遊戲面板
         }
 
-        function calculate() {
+        // 初始化/重設 遊戲面板
+        function initGame() {
             const layers = parseInt(document.getElementById("layers").value);
             const x = parseInt(document.getElementById("arrangement").value); // 排數 (rows)
-            const n = 12 / layers; // 每層總罐數 (cans per layer)
-            const cols = n / x;    // 列數 (columns)
+            cansToPlace = 12 / layers; // 這一層有幾個罐子
+            const cols = cansToPlace / x; // 列數 (columns)
+            cansPlaced = 0;
 
-            // 計算長寬高
+            // 鎖上右邊面板
+            lockOverlay.classList.remove('unlocked');
+            instruction.innerText = `👇 請將 ${cansToPlace} 個紅點拖曳到下方的淺色方格內`;
+            instruction.style.background = "rgba(255, 255, 255, 0.8)";
+
+            // 清空區域
+            stagingArea.innerHTML = '';
+            gridArea.innerHTML = '';
+
+            // 1. 產生紅點 (Cans) 到上方準備區
+            for (let i = 0; i < cansToPlace; i++) {
+                const can = document.createElement("div");
+                can.className = "can";
+                stagingArea.appendChild(can);
+            }
+
+            // 2. 產生淺色方格 (Slots) 到下方網格區
+            gridArea.style.gridTemplateColumns = `repeat(${cols}, 45px)`;
+            gridArea.style.gridTemplateRows = `repeat(${x}, 45px)`;
+            for (let i = 0; i < cansToPlace; i++) {
+                const slot = document.createElement("div");
+                slot.className = "slot";
+                gridArea.appendChild(slot);
+            }
+
+            // 預先計算好隱藏的結果，等解鎖時顯示
+            calculateResults(layers, x, cansToPlace, cols);
+        }
+
+        function calculateResults(layers, x, n, cols) {
             const width = x * d;
             const length = cols * d;
             const height = layers * h;
-
-            // 計算總表面積 2(WL + WH + LH)
             const area = 2 * (width * length + width * height + length * height);
 
-            // === 產生真實分數排版的 HTML 字串 (絕對不會有斜線 /) ===
             const part1 = `<span style="display:inline-block; vertical-align:middle;">2(${n})(${d})²</span>`;
-            
-            // 分數 1：24dhx 上，n 下
-            const part2HTML = `
-                <span class="math-fraction">
-                    <span class="math-numerator">24(${d})(${h})(${x})</span>
-                    <span class="math-denominator">${n}</span>
-                </span>`;
-                
-            // 分數 2：24dh 上，x 下
-            const part3HTML = `
-                <span class="math-fraction">
-                    <span class="math-numerator">24(${d})(${h})</span>
-                    <span class="math-denominator">${x}</span>
-                </span>`;
-                
-            // 組合完整公式
+            const part2HTML = `<span class="math-fraction"><span class="math-numerator">24(${d})(${h})(${x})</span><span class="math-denominator">${n}</span></span>`;
+            const part3HTML = `<span class="math-fraction"><span class="math-numerator">24(${d})(${h})</span><span class="math-denominator">${x}</span></span>`;
             const formulaHTML = `<span class="math-operator">=</span> ${part1} <span class="math-operator">+</span> ${part2HTML} <span class="math-operator">+</span> ${part3HTML}`;
 
-            // 更新文字與 HTML 顯示
             document.getElementById("wid").innerText = width.toFixed(1);
             document.getElementById("len").innerText = length.toFixed(1);
             document.getElementById("hei").innerText = height.toFixed(1);
             document.getElementById("formula-display").innerHTML = formulaHTML; 
             document.getElementById("area").innerText = area.toFixed(2);
 
-            // 如果是最佳解 (2146.68)，顯示徽章
             if (Math.abs(area - 2146.68) < 0.1) {
                 document.getElementById("best-badge").style.display = "inline-block";
             } else {
                 document.getElementById("best-badge").style.display = "none";
             }
-
-            // 更新視覺化圖形
-            drawCans(x, cols, layers);
         }
 
-        function drawCans(rows, cols, layers) {
-            const grid = document.getElementById("can-grid");
-            const badge = document.getElementById("layer-badge");
-            
-            grid.innerHTML = ""; // 清空畫布
-            grid.style.gridTemplateColumns = `repeat(${cols}, 35px)`;
-            grid.style.gridTemplateRows = `repeat(${rows}, 35px)`;
+        // ==========================================
+        // 拖曳功能 (支援滑鼠與手機觸控 Pointer Events)
+        // ==========================================
+        let currentDrag = null;
+        let offset = { x: 0, y: 0 };
 
-            badge.innerText = `📦 俯視圖 (共疊了 ${layers} 層)`;
-
-            // 生成頂層的汽水罐
-            for (let i = 0; i < rows * cols; i++) {
-                const can = document.createElement("div");
-                can.className = "can";
-                grid.appendChild(can);
+        document.addEventListener('pointerdown', (e) => {
+            // 如果點擊的是紅點，且還沒被鎖定在格子裡
+            if (e.target.classList.contains('can') && e.target.parentElement.id === 'staging-area') {
+                currentDrag = e.target;
+                currentDrag.setPointerCapture(e.pointerId);
+                
+                // 為了讓拖曳時能自由移動，改用 fixed 定位
+                const rect = currentDrag.getBoundingClientRect();
+                offset.x = e.clientX - rect.left;
+                offset.y = e.clientY - rect.top;
+                
+                document.body.appendChild(currentDrag); // 移到最外層避免被裁切
+                currentDrag.style.position = 'fixed';
+                currentDrag.style.left = (e.clientX - offset.x) + 'px';
+                currentDrag.style.top = (e.clientY - offset.y) + 'px';
+                currentDrag.style.margin = '0';
             }
-            
-            // 加入陰影效果模擬多層
-            if (layers > 1) {
-                grid.style.boxShadow = `${layers * 2}px ${layers * 2}px 0px rgba(0,0,0,0.5)`;
-                grid.style.transform = `translate(-${layers}px, -${layers}px)`;
-            } else {
-                grid.style.boxShadow = "none";
-                grid.style.transform = "none";
-            }
-        }
+        });
 
-        // 初始化
+        document.addEventListener('pointermove', (e) => {
+            if (currentDrag) {
+                currentDrag.style.left = (e.clientX - offset.x) + 'px';
+                currentDrag.style.top = (e.clientY - offset.y) + 'px';
+            }
+        });
+
+        document.addEventListener('pointerup', (e) => {
+            if (currentDrag) {
+                currentDrag.releasePointerCapture(e.pointerId);
+                
+                // 取得紅點的中心座標
+                const canRect = currentDrag.getBoundingClientRect();
+                const canCenterX = canRect.left + canRect.width / 2;
+                const canCenterY = canRect.top + canRect.height / 2;
+                
+                let snapped = false;
+                const slots = document.querySelectorAll('.slot:not(.filled)');
+                
+                // 檢查是否靠近任何一個空的淺色方格
+                for (let slot of slots) {
+                    const slotRect = slot.getBoundingClientRect();
+                    const slotCenterX = slotRect.left + slotRect.width / 2;
+                    const slotCenterY = slotRect.top + slotRect.height / 2;
+                    
+                    // 計算距離
+                    const dist = Math.hypot(canCenterX - slotCenterX, canCenterY - slotCenterY);
+                    
+                    // 如果距離小於 40px，就「吸附」進去
+                    if (dist < 40) {
+                        slot.appendChild(currentDrag);
+                        currentDrag.style.position = 'static'; // 恢復正常排版
+                        slot.classList.add('filled');
+                        currentDrag.style.cursor = 'default';
+                        snapped = true;
+                        cansPlaced++;
+                        break;
+                    }
+                }
+                
+                // 如果沒有吸附到格子，就彈回準備區
+                if (!snapped) {
+                    stagingArea.appendChild(currentDrag);
+                    currentDrag.style.position = 'relative';
+                    currentDrag.style.left = 'auto';
+                    currentDrag.style.top = 'auto';
+                }
+                
+                currentDrag = null;
+
+                // 檢查是否全部排完
+                if (cansPlaced === cansToPlace) {
+                    // 解鎖右方面板
+                    lockOverlay.classList.add('unlocked');
+                    instruction.innerText = "🎉 排列完成！公式已解鎖！";
+                    instruction.style.background = "#d4edda";
+                    instruction.style.color = "#155724";
+                }
+            }
+        });
+
+        // 初始化網頁
         window.onload = updateArrangements;
     </script>
 </body>
