@@ -6,7 +6,7 @@
     <title>汽水包裝設計 - 數學建模展示</title>
     <style>
         :root {
-            --primary-color: #e50014; /* Coca-cola red */
+            --primary-color: #e50014;
             --bg-color: #f4f4f9;
             --box-bg: #ffffff;
         }
@@ -27,7 +27,7 @@
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            max-width: 900px;
+            max-width: 950px;
             width: 100%;
             justify-content: center;
         }
@@ -37,7 +37,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             flex: 1;
-            min-width: 300px;
+            min-width: 320px;
         }
         .control-group {
             margin-bottom: 15px;
@@ -65,11 +65,21 @@
             margin: 8px 0;
             font-size: 16px;
         }
+        .formula-box {
+            background: #fff;
+            padding: 10px;
+            border-left: 4px solid var(--primary-color);
+            margin: 10px 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            color: #333;
+            overflow-x: auto;
+        }
         .highlight {
             font-size: 24px;
             font-weight: bold;
             color: var(--primary-color);
-            margin-top: 10px;
+            margin-top: 5px;
             display: inline-block;
         }
         .best-badge {
@@ -88,11 +98,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: #e5cbab; /* Cardboard color */
+            background: #e5cbab;
             border: 2px dashed #b58c5c;
             position: relative;
-            overflow: hidden;
-            min-height: 300px;
+            overflow: auto; /* 允許出現捲軸，防止 1x12 被切斷 */
+            min-height: 350px;
+            padding: 30px 10px;
         }
         .can-grid {
             display: grid;
@@ -100,6 +111,8 @@
             padding: 10px;
             background: rgba(255,255,255,0.3);
             border-radius: 8px;
+            min-width: max-content; /* 確保汽水罐不會被擠壓變形 */
+            min-height: max-content;
         }
         .can {
             width: 40px;
@@ -129,6 +142,7 @@
             border-radius: 20px;
             font-weight: bold;
             font-size: 14px;
+            z-index: 10;
         }
     </style>
 </head>
@@ -151,21 +165,31 @@
                 </select>
             </div>
             <div class="control-group">
-                <label for="arrangement">每層排列方式 (排 x 列):</label>
+                <label for="arrangement">每層排列方式 (Arrangement per layer):</label>
                 <select id="arrangement" onchange="calculate()">
                     </select>
             </div>
 
             <div class="result-box">
-                <h3>📦 計算結果</h3>
-                <p>假設：直徑 $d = 6.7$ cm, 高度 $h = 12$ cm</p>
+                <h3>📦 計算結果 (Calculation Results)</h3>
+                <p>假設 (Assumptions): <br>
+                   直徑 (Diameter, d) = 6.7 cm <br>
+                   高度 (Height, h) = 12 cm</p>
                 <hr>
-                <p>包裝長度 (L): <span id="len">0</span> cm</p>
-                <p>包裝闊度 (W): <span id="wid">0</span> cm</p>
-                <p>包裝高度 (H): <span id="hei">0</span> cm</p>
-                <div>總表面面積 (Surface Area): <br>
+                <p>包裝長度 (Length, L): <span id="len" style="font-weight:bold;">0</span> cm</p>
+                <p>包裝闊度 (Width, W): <span id="wid" style="font-weight:bold;">0</span> cm</p>
+                <p>包裝高度 (Height, H): <span id="hei" style="font-weight:bold;">0</span> cm</p>
+                
+                <div style="margin-top: 15px;">
+                    <strong>代入公式 (Substituted Formula):</strong><br>
+                    <span style="font-size: 13px; color: #666;">公式: 2nd² + 24dhx/n + 24dh/x</span>
+                    <div class="formula-box" id="formula-display">
+                        </div>
+                </div>
+
+                <div style="margin-top: 10px;">總表面面積 (Total Surface Area): <br>
                     <span class="highlight" id="area">0</span> <span class="highlight" style="font-size:18px;">cm²</span>
-                    <span id="best-badge" class="best-badge">🏆 最佳省料方案!</span>
+                    <span id="best-badge" class="best-badge">🏆 最佳省料方案 (Best)!</span>
                 </div>
             </div>
         </div>
@@ -178,8 +202,8 @@
     </div>
 
     <script>
-        const d = 6.7; // 直徑
-        const h = 12;  // 高度
+        const d = 6.7; // 直徑 (Diameter)
+        const h = 12;  // 高度 (Height)
         
         // 定義每一層數對應的排列可能性 [排(x), 列(n/x)]
         const configs = {
@@ -199,7 +223,7 @@
             configs[layers].forEach(arr => {
                 const option = document.createElement("option");
                 option.value = arr[0]; // value 存儲排數 x
-                option.text = `${arr[0]} 排 × ${arr[1]} 列`;
+                option.text = `${arr[0]} 排(rows) × ${arr[1]} 列(cols)`;
                 arrangementSelect.appendChild(option);
             });
 
@@ -208,22 +232,30 @@
 
         function calculate() {
             const layers = parseInt(document.getElementById("layers").value);
-            const x = parseInt(document.getElementById("arrangement").value); // 排數
-            const n = 12 / layers; // 每層總罐數
-            const cols = n / x;    // 列數
+            const x = parseInt(document.getElementById("arrangement").value); // 排數 (rows)
+            const n = 12 / layers; // 每層總罐數 (cans per layer)
+            const cols = n / x;    // 列數 (columns)
 
             // 計算長寬高
             const width = x * d;
             const length = cols * d;
             const height = layers * h;
 
-            // 計算總表面積 2(WL + WH + LH)
+            // 計算總表面積 2(WL + WH + LH)，等同於工作紙上的公式
             const area = 2 * (width * length + width * height + length * height);
+
+            // 產生代入數字的公式字串
+            // 公式: 2nd^2 + (24dhx)/n + (24dh)/x
+            const part1 = `2(${n})(${d})²`;
+            const part2 = `[24(${d})(${h})(${x})] / ${n}`;
+            const part3 = `[24(${d})(${h})] / ${x}`;
+            const formulaString = `= ${part1} + ${part2} + ${part3}`;
 
             // 更新文字顯示
             document.getElementById("wid").innerText = width.toFixed(1);
             document.getElementById("len").innerText = length.toFixed(1);
             document.getElementById("hei").innerText = height.toFixed(1);
+            document.getElementById("formula-display").innerText = formulaString;
             document.getElementById("area").innerText = area.toFixed(2);
 
             // 如果是最佳解 (2146.68)，顯示徽章
