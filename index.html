@@ -18,7 +18,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* 防止拖曳時整個網頁被拉動 */
             overscroll-behavior-y: contain; 
         }
         h1 {
@@ -44,7 +43,6 @@
             align-items: flex-start;
         }
         
-        /* 左側：控制與互動區 */
         .interactive-panel {
             flex: 1.5;
             min-width: 320px;
@@ -80,9 +78,8 @@
             font-size: 15px;
         }
 
-        /* 遊戲區域 */
         .game-board {
-            background: #e5cbab; /* 紙皮顏色 */
+            background: #e5cbab; 
             border: 2px dashed #b58c5c;
             border-radius: 12px;
             padding: 20px;
@@ -101,9 +98,9 @@
             margin-bottom: 15px;
             font-size: 15px;
             pointer-events: none;
+            text-align: center;
         }
         
-        /* 準備區 (上方) */
         .staging-area {
             display: flex;
             flex-wrap: wrap;
@@ -114,17 +111,16 @@
             width: 100%;
         }
 
-        /* 目標網格區 (下方) */
+        /* 網格區：移除背景色，完全透明 */
         .grid-area {
             display: grid;
             gap: 2px;
             padding: 15px;
-            background: rgba(255,255,255,0.2); /* 讓整個底色變淡 */
+            background: transparent; 
             border-radius: 8px;
             margin: 0 auto;
         }
 
-        /* 汽水罐 (紅點) */
         .can {
             width: 40px;
             height: 40px;
@@ -136,7 +132,7 @@
             border: 2px solid #a00000;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
             cursor: grab;
-            touch-action: none; /* 在手機上拖曳時不滾動螢幕 */
+            touch-action: none; 
             position: relative;
             z-index: 10;
         }
@@ -151,20 +147,18 @@
             border: 1px solid rgba(255,255,255,0.5);
         }
 
-        /* 空插槽 (取消圓形虛線，改為淺色方格) */
+        /* 空插槽：完全隱形，只作為磁吸定位點 */
         .slot {
             width: 45px;
             height: 45px;
-            background-color: rgba(255, 255, 255, 0.4); /* 淺白色方格 */
-            border: 1px solid rgba(255, 255, 255, 0.6); /* 淡淡的邊線 */
-            border-radius: 4px; /* 方形微圓角 */
+            background-color: transparent; 
+            border: none; 
             display: flex;
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
         }
 
-        /* 右側：公式與結果區 */
         .results-panel {
             flex: 1;
             min-width: 300px;
@@ -176,7 +170,6 @@
             overflow: hidden;
         }
         
-        /* 上鎖遮罩 */
         .lock-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -204,7 +197,6 @@
             padding: 0 20px;
         }
 
-        /* 公式與結果文字樣式 */
         .result-item {
             margin: 10px 0;
             font-size: 16px;
@@ -291,10 +283,9 @@
             </div>
 
             <div class="game-board" id="game-board">
-                <div class="instruction" id="instruction">👇 請將所有紅點拖曳到下方的淺色方格內</div>
+                <div class="instruction" id="instruction">👇 請在下方空白處，用紅點拼出正確的排列形狀</div>
                 
                 <div class="staging-area" id="staging-area"></div>
-                
                 <div class="grid-area" id="grid-area"></div>
             </div>
         </div>
@@ -302,7 +293,7 @@
         <div class="results-panel">
             <div class="lock-overlay" id="lock-overlay">
                 <div class="lock-icon">🔒</div>
-                <div class="lock-text">請先完成左方的汽水排列，<br>解鎖數學公式與計算結果！</div>
+                <div class="lock-text">請先在左方拼出正確的排列形狀，<br>解鎖數學公式與計算結果！</div>
             </div>
 
             <h3 style="margin-top:0;">📦 計算結果 (Results)</h3>
@@ -316,8 +307,7 @@
             
             <div style="margin-top: 15px;">
                 <strong>代入公式 (Substituted Formula):</strong><br>
-                <div class="formula-box" id="formula-display">
-                    </div>
+                <div class="formula-box" id="formula-display"></div>
             </div>
 
             <div style="margin-top: 15px;">總表面面積 (Surface Area): <br>
@@ -328,8 +318,8 @@
     </div>
 
     <script>
-        const d = 6.7; // 直徑
-        const h = 12;  // 高度
+        const d = 6.7; 
+        const h = 12;  
         
         const configs = {
             1: [[1, 12], [2, 6], [3, 4]],
@@ -340,13 +330,11 @@
             12: [[1, 1]]
         };
 
-        // DOM 元素
         const stagingArea = document.getElementById('staging-area');
         const gridArea = document.getElementById('grid-area');
         const lockOverlay = document.getElementById('lock-overlay');
         const instruction = document.getElementById('instruction');
 
-        // 遊戲狀態
         let cansToPlace = 0;
         let cansPlaced = 0;
 
@@ -362,35 +350,30 @@
                 arrangementSelect.appendChild(option);
             });
 
-            initGame(); // 重設遊戲面板
+            initGame(); 
         }
 
-        // 初始化/重設 遊戲面板
         function initGame() {
             const layers = parseInt(document.getElementById("layers").value);
-            const x = parseInt(document.getElementById("arrangement").value); // 排數 (rows)
-            cansToPlace = 12 / layers; // 這一層有幾個罐子
-            const cols = cansToPlace / x; // 列數 (columns)
+            const x = parseInt(document.getElementById("arrangement").value); 
+            cansToPlace = 12 / layers; 
+            const cols = cansToPlace / x; 
             cansPlaced = 0;
 
-            // 鎖上右邊面板
             lockOverlay.classList.remove('unlocked');
-            instruction.innerText = `👇 請將 ${cansToPlace} 個紅點拖曳到下方的淺色方格內`;
+            instruction.innerText = `👇 請在下方空白處，拼出 ${x} 排 × ${cols} 列 的形狀`;
             instruction.style.background = "rgba(255, 255, 255, 0.8)";
             instruction.style.color = "#333";
 
-            // 清空區域
             stagingArea.innerHTML = '';
             gridArea.innerHTML = '';
 
-            // 1. 產生紅點 (Cans) 到上方準備區
             for (let i = 0; i < cansToPlace; i++) {
                 const can = document.createElement("div");
                 can.className = "can";
                 stagingArea.appendChild(can);
             }
 
-            // 2. 產生淺色方格 (Slots) 到下方網格區
             gridArea.style.gridTemplateColumns = `repeat(${cols}, 45px)`;
             gridArea.style.gridTemplateRows = `repeat(${x}, 45px)`;
             for (let i = 0; i < cansToPlace; i++) {
@@ -399,7 +382,6 @@
                 gridArea.appendChild(slot);
             }
 
-            // 預先計算好隱藏的結果，等解鎖時顯示
             calculateResults(layers, x, cansToPlace, cols);
         }
 
@@ -427,14 +409,10 @@
             }
         }
 
-        // ==========================================
-        // 拖曳功能 (支援滑鼠與手機觸控 Pointer Events)
-        // ==========================================
         let currentDrag = null;
         let offset = { x: 0, y: 0 };
 
         document.addEventListener('pointerdown', (e) => {
-            // 如果點擊的是紅點，且還沒被鎖定在格子裡
             if (e.target.classList.contains('can') && e.target.parentElement.id === 'staging-area') {
                 currentDrag = e.target;
                 currentDrag.setPointerCapture(e.pointerId);
@@ -462,7 +440,6 @@
             if (currentDrag) {
                 currentDrag.releasePointerCapture(e.pointerId);
                 
-                // 取得紅點的中心座標
                 const canRect = currentDrag.getBoundingClientRect();
                 const canCenterX = canRect.left + canRect.width / 2;
                 const canCenterY = canRect.top + canRect.height / 2;
@@ -470,13 +447,11 @@
                 let snapped = false;
                 const slots = document.querySelectorAll('.slot:not(.filled)');
                 
-                // 檢查是否靠近任何一個空的淺色方格
                 for (let slot of slots) {
                     const slotRect = slot.getBoundingClientRect();
                     const slotCenterX = slotRect.left + slotRect.width / 2;
                     const slotCenterY = slotRect.top + slotRect.height / 2;
                     
-                    // 計算距離，如果小於 40px，就「吸附」進去
                     const dist = Math.hypot(canCenterX - slotCenterX, canCenterY - slotCenterY);
                     
                     if (dist < 40) {
@@ -490,7 +465,6 @@
                     }
                 }
                 
-                // 如果沒有吸附到格子，就彈回準備區
                 if (!snapped) {
                     stagingArea.appendChild(currentDrag);
                     currentDrag.style.position = 'relative';
@@ -500,9 +474,7 @@
                 
                 currentDrag = null;
 
-                // 檢查是否全部排完
                 if (cansPlaced === cansToPlace) {
-                    // 解鎖右方面板
                     lockOverlay.classList.add('unlocked');
                     instruction.innerText = "🎉 排列完成！公式已解鎖！";
                     instruction.style.background = "#d4edda";
@@ -511,7 +483,6 @@
             }
         });
 
-        // 初始化網頁
         window.onload = updateArrangements;
     </script>
 </body>
